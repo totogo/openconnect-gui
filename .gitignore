@@ -16,3 +16,6 @@ _xxx/
 *.zip
 *.exe
 *.exe.sha512
+
+# local build output
+/dist/
