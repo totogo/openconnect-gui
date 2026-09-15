@@ -74,6 +74,17 @@ if(APPLE)
     )
 endif()
 
+if(APPLE)
+    # Objective-C++ is needed for the Qt tray-icon guard (see macos/TrayIconWorkaround.mm)
+    enable_language(OBJCXX)
+    list(APPEND ${PROJECT_NAME}_SRCS
+        macos/StaleVpnState.cpp
+        macos/StaleVpnState.h
+        macos/TrayIconWorkaround.h
+        macos/TrayIconWorkaround.mm
+    )
+endif()
+
 add_executable(${PROJECT_NAME}
     ${${PROJECT_NAME}_SRCS}
     ${${PROJECT_NAME}_RESOURCES}
@@ -190,6 +201,18 @@ install(TARGETS ${PROJECT_NAME}
 get_target_property(QT_LIBRARY_DIR Qt6::Core LOCATION)
 get_filename_component(QT_LIBRARY_DIR ${QT_LIBRARY_DIR} PATH)
 list(APPEND libSearchDirs ${QT_LIBRARY_DIR})
+if(APPLE)
+    # Qt frameworks and plugins reference each other via @rpath (Homebrew qtbase);
+    # fixup_bundle needs the directory that holds the *.framework bundles.
+    string(REGEX REPLACE "/QtCore\\.framework/.*$" "" QT_FRAMEWORKS_DIR "${QT_LIBRARY_DIR}")
+    list(APPEND libSearchDirs ${QT_FRAMEWORKS_DIR})
+    # Some Homebrew libraries (e.g. brotli) also use @rpath install names.
+    foreach(_brew_lib_dir /opt/homebrew/lib /usr/local/lib)
+        if(EXISTS ${_brew_lib_dir})
+            list(APPEND libSearchDirs ${_brew_lib_dir})
+        endif()
+    endforeach()
+endif()
 
 if(MINGW)
     set(APPS "\${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.exe")
@@ -222,30 +245,30 @@ if(MINGW)
         )
     endif()
 elseif(APPLE)
-    set(APPS "\${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app")
+    set(APPS "\${CMAKE_INSTALL_PREFIX}/${PRODUCT_NAME_SHORT}.app")
     list(APPEND libSearchDirs "")
 
     # Qt Platform Plugin
     install(FILES
         ${_qcocoa_dylib}
-        DESTINATION ${PROJECT_NAME}.app/Contents/PlugIns/platforms
+        DESTINATION ${PRODUCT_NAME_SHORT}.app/Contents/PlugIns/platforms
         COMPONENT App
     )
-    set(additionalLib \${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/PlugIns/platforms/libqcocoa.dylib)
+    set(additionalLib \${CMAKE_INSTALL_PREFIX}/${PRODUCT_NAME_SHORT}.app/Contents/PlugIns/platforms/libqcocoa.dylib)
     if(Qt6Core_VERSION VERSION_GREATER_EQUAL "6.0")
         install(FILES
             ${_qmacstyle_dylib}
-            DESTINATION ${PROJECT_NAME}.app/Contents/PlugIns/styles
+            DESTINATION ${PRODUCT_NAME_SHORT}.app/Contents/PlugIns/styles
             COMPONENT App
         )
         set(additionalLib
             ${additionalLib}
-            \${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/PlugIns/styles/libqmacstyle.dylib
+            \${CMAKE_INSTALL_PREFIX}/${PRODUCT_NAME_SHORT}.app/Contents/PlugIns/styles/libqmacstyle.dylib
         )
     endif()
     install(FILES
         ${CMAKE_SOURCE_DIR}/bundle/qt.conf
-        DESTINATION ${PROJECT_NAME}.app/Contents/Resources
+        DESTINATION ${PRODUCT_NAME_SHORT}.app/Contents/Resources
         COMPONENT App
     )
 else()

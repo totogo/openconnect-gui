@@ -39,6 +39,10 @@ extern "C" {
 #include <OcSettings.h>
 #include <QtSingleApplication>
 
+#ifdef Q_OS_MACOS
+#include "macos/StaleVpnState.h"
+#include "macos/TrayIconWorkaround.h"
+#endif
 #ifdef __MACH__
 #include <Security/Security.h>
 #include <mach-o/dyld.h>
@@ -148,6 +152,11 @@ int main(int argc, char* argv[])
     app.setApplicationDisplayName(APP_NAME);
     app.setQuitOnLastWindowClosed(false);
 
+#ifdef Q_OS_MACOS
+    /* Must run after QApplication loaded the cocoa platform plugin and before the tray icon is created. */
+    installMacOSTrayIconWorkaround();
+#endif
+
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
         haveTray=true;
     }
@@ -169,6 +178,11 @@ int main(int argc, char* argv[])
 
     auto fileLog = std::make_unique<FileLogger>();
     Logger::instance().addMessage(QString("%1 (%2) logging started...").arg(app.applicationDisplayName()).arg(app.applicationVersion()));
+
+#ifdef Q_OS_MACOS
+    /* A crash while connected leaves the VPN DNS / primary-interface state behind; clean it up now that we are root. */
+    StaleVpnState::cleanupStaleTunServiceState();
+#endif
 
     gnutls_global_init();
 #ifndef _WIN32

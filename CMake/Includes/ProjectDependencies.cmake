@@ -16,8 +16,11 @@ if(MINGW)
 endif()
 if(APPLE)
     get_target_property(_qcocoa_dylib Qt6::QCocoaIntegrationPlugin LOCATION)
+    # Homebrew ships the plugin as a symlink into the Cellar; install(FILES) would copy the (broken) link.
+    get_filename_component(_qcocoa_dylib "${_qcocoa_dylib}" REALPATH)
     if(Qt6Core_VERSION VERSION_GREATER_EQUAL "6.0")
         get_target_property(_qmacstyle_dylib Qt6::QMacStylePlugin LOCATION)
+        get_filename_component(_qmacstyle_dylib "${_qmacstyle_dylib}" REALPATH)
     endif()
 endif()
 
