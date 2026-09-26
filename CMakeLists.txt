@@ -7,7 +7,7 @@ if(APPLE)
 endif()
 
 project(openconnect-gui
-    VERSION 1.6.2
+    VERSION 1.6.3
     HOMEPAGE_URL https://gui.openconnect-vpn.net/
     LANGUAGES CXX
 )
@@ -57,6 +57,12 @@ if(MINGW)
 endif()
 
 add_subdirectory(src)
+
+option(BUILD_TESTING "Build the unit tests (requires Qt6::Test)" OFF)
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 install(FILES LICENSE.txt
     DESTINATION .

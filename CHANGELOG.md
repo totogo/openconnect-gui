@@ -7,6 +7,8 @@ History of user-visible changes.
 - Update spdlog (1.15.3)
 - Windows Installer filename includes OpenConnect version
 - Fix Log / Main Window position /size issue (#246)
+- macOS: work around a Qt 6.11.2 crash when opening the tray-icon menu on macOS 27, and clean up VPN DNS / primary-interface state left behind by a previous abnormal exit at start-up
+- macOS: fix `cmake --install` bundling with the current Homebrew Qt layout (qtbase symlinked plugins, @rpath frameworks) and install the bundle under its real name
 
 [Full Changelog](https://gitlab.com/openconnect/openconnect-gui/-/compare/v1.6.2...main)
 
